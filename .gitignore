@@ -1,2 +1,12 @@
+#virtual environment and environment variables
 /env
 .env
+
+#python files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+#vs file
+.vscode/
