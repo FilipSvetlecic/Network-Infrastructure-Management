@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Manage Devices{% endblock %}
+{% block content %}
+<h1>Network Devices</h1>
+
+<button id="add-device-btn" class="btn btn-primary">+ Add New Device</button>
+
+<div class="filters">
+    <input type="text" id="search-name" placeholder="Search by name, IP, or serial">
+    <select id="filter-type">
+        <option value="">All Types</option>
+        <option value="Router">Router</option>
+        <option value="Switch">Switch</option>
+        <option value="Workstation">Workstation</option>
+        <option value="Firewall">Firewall</option>
+        <option value="Server">Server</option>
+        <option value="LoadBalancer">LoadBalancer</option>
+    </select>
+    <select id="filter-status">
+        <option value="">All Statuses</option>
+        <option value="running">Running</option>
+        <option value="not-running">Not Running</option>
+    </select>
+    <select id="filter-location">
+        <option value="">All Locations</option>
+    </select>
+    <select id="filter-lans">
+        <option value="">All LANs</option>
+    </select>
+    <button id="btn-filter" type="submit" class="btn btn-primary">Apply filters</button>
+</div>
+
+<table id="device-table">
+    <thead>
+        <tr>
+            <th class="sortable" data-column="name">Name </th>
+            <th class="sortable" data-column="type">Type </th>
+            <th class="sortable" data-column="ip_address">IP Address </th>
+            <th class="sortable" data-column="status">Status </th>
+            <th class="sortable" data-column="location">Location </th>
+            <th class="sortable" data-column="lan">LAN </th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for device in devices %}
+        <tr 
+            class="device-row" 
+            data-id="{{ device.id }}"
+            data-name="{{ device.name }}" 
+            data-type="{{ device.type }}" 
+            data-ip="{{ device.ip_address }}" 
+            data-status="{{ device.status }}"
+            data-location="{{ device.location if device.location else 'N/A' }}"
+            data-lan="{{ device.lan if device.lan else 'N/A' }}"
+        >
+            <td>{{ device.name }}</td>
+            <td>{{ device.type }}</td>
+            <td>{{ device.ip_address }}</td>
+            <td><span class="status-badge status-{{ device.status }}">{{ device.status }}</span></td>
+            <td>{{ device.location if device.location else 'N/A' }}</td>
+            <td>{{ device.lan if device.lan else 'N/A' }}</td>
+            <td class="action-buttons">
+                <button class="btn-edit" data-id="{{ device.id }}" title="Edit">✏️</button>
+                <button class="btn-delete" data-id="{{ device.id }}" title="Delete">🗑️</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div id="device-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modal-title">Add New Device</h2>
+        <form id="device-form">
+            <input type="hidden" id="device-id">
+            
+            <div class="form-group">
+                <label for="device-name">Name *</label>
+                <input type="text" id="device-name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="device-type">Type *</label>
+                <select id="device-type" required>
+                    <option value="" disabled selected>Select device type</option>
+                    <option value="Router">Router</option>
+                    <option value="Switch">Switch</option>
+                    <option value="Workstation">Workstation</option>
+                    <option value="Firewall">Firewall</option>
+                    <option value="Server">Server</option>
+                    <option value="LoadBalancer">Load Balancer</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="device-ip">IP Address *</label>
+                <input type="text" id="device-ip" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="device-status">Status *</label>
+                <select id="device-status" required>
+                    <option value="running">Running</option>
+                    <option value="not-running">Not Running</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="device-manufacturer">Manufacturer</label>
+                <input type="text" id="device-manufacturer">
+            </div>
+            
+            <div class="form-group">
+                <label for="device-model">Model</label>
+                <input type="text" id="device-model">
+            </div>
+            
+            <div class="form-group">
+                <label for="device-serial">Serial Number</label>
+                <input type="text" id="device-serial">
+            </div>
+            
+            <div class="form-group">
+                <label for="device-mac">MAC Address</label>
+                <input type="text" id="device-mac">
+            </div>
+            
+            <div class="form-group">
+                <label for="device-location">Location</label>
+                <select id="device-location">
+                    <option value="">None</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="device-lan">LAN</label>
+                <select id="device-lan">
+                    <option value="">None</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="device-connections">Connect To (hold Ctrl for multiple)</label>
+                <select id="device-connections" multiple size="5">
+                    <option value="">Loading devices...</option>
+                </select>
+                <small style="color: #666; font-size: 12px;">Select devices this will connect to in the network</small>
+            </div>
+            
+            <div id="workstation-fields" class="type-specific" style="display: none;">
+                <div class="form-group">
+                    <label for="device-os">Operating System</label>
+                    <input type="text" id="device-os">
+                </div>
+                <div class="form-group">
+                    <label for="device-user">User</label>
+                    <input type="text" id="device-user">
+                </div>
+            </div>
+            
+            <div id="router-fields" class="type-specific" style="display: none;">
+                <div class="form-group">
+                    <label for="device-router-role">Router Role</label>
+                    <select id="device-router-role">
+                        <option value="">None</option>
+                        <option value="core">Core</option>
+                        <option value="building">Building</option>
+                        <option value="edge">Edge</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="firewall-fields" class="type-specific" style="display: none;">
+                <div class="form-group">
+                    <label for="device-firewall-type">Firewall Type</label>
+                    <select id="device-firewall-type">
+                        <option value="">None</option>
+                        <option value="next-gen">Next-Gen</option>
+                        <option value="traditional">Traditional</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="device-fw-os">Operating System</label>
+                    <input type="text" id="device-fw-os">
+                </div>
+            </div>
+
+            <div id="server-fields" class="type-specific" style="display: none;">
+                <div class="form-group">
+                    <label for="device-server-role">Server Role</label>
+                    <input type="text" id="device-server-role">
+                </div>
+                <div class="form-group">
+                    <label for="device-server-os">Operating System</label>
+                    <input type="text" id="device-server-os">
+                </div>
+                <div class="form-group">
+                    <label for="device-cpus">Total CPUs</label>
+                    <input type="number" id="device-cpus">
+                </div>
+                <div class="form-group">
+                    <label for="device-ram">Total RAM (GB)</label>
+                    <input type="number" id="device-ram">
+                </div>
+            </div>
+
+            <div id="loadbalancer-fields" class="type-specific" style="display: none;">
+                <div class="form-group">
+                    <label for="device-lb-type">Load Balancer Type</label>
+                    <input type="text" id="device-lb-type">
+                </div>
+                <div class="form-group">
+                    <label for="device-algorithm">Algorithm</label>
+                    <input type="text" id="device-algorithm">
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-secondary" id="cancel-btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block info %}
+<div id="device-info">
+    <p>Select a device to see details.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/devices.js') }}"></script>
+{% endblock %}
